@@ -166,11 +166,11 @@ export default {
       }
 
       // Copy the search image to the left-hand side of the table row.
-      // We do this because, for every search, we append a new row to the page and reset the Dropzone.
+      // We do this because, for every search, we insert a new row at the top of the page and reset the Dropzone.
       // Unfortunately Dropzone only gives us a File/Blob, so we need to load it into a dataURL to show it,
       // which is an asynchronous operation:
       var _search_images = this.search_images
-      var _search_idx = this.search_images.length
+      var _search_idx = 0
       this.blob_to_data_url( file, 
         function(dataURL)
         {
@@ -182,8 +182,8 @@ export default {
         } 
       )
 
-      this.search_images.push(file.name) // push filename as a placeholder; dataURL will be available asynchronously
-      this.search_results.push(new_results)
+      this.search_images.unshift(file.name) // push filename as a placeholder; dataURL will be available asynchronously
+      this.search_results.unshift(new_results)
     }
   },
 
