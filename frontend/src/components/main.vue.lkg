@@ -1,0 +1,323 @@
+<template>
+  <div >
+    <!-- Header -->
+    <h1>Database {{ database_name }} contains {{ num_images }} images</h1>
+    <div>
+      <router-link to="/about">About</router-link>
+    </div>
+
+    <!-- QueryDropZone -->
+    <div>
+      <vue-dropzone 
+        ref = "dropzone" 
+        id = "dropzone" 
+        :options = "dropConfig"
+        :useCustomSlot = true
+        @vdropzone-complete = "on_query_complete"
+        >
+          <div class="dropzone-custom-content">
+            <h3 class="dropzone-custom-title">Drop photo to search</h3>
+            <div class="subtitle">...or click to select a file</div>
+          </div>              
+        </vue-dropzone>
+    </div>
+
+    <!-- Yes I'm using a table. So 1996 -->
+    <div>
+    <thead>
+      <tr>
+        <th scope="col"></th> <!-- search -->
+        <th scope="col"></th> <!-- = -->
+        <th scope="col"></th> <!-- result 1 -->
+        <th scope="col"></th> <!-- result 2 -->
+        <th scope="col"></th> <!-- result 3 -->
+        <th scope="col"></th> <!-- result 4 -->
+        <th scope="col"></th> <!-- result 5 -->
+      </tr>
+    </thead>      
+    <tbody>
+        <tr>
+          <!-- QueryImage -->
+          <td>
+            <div id="search-image" class="dropzone-search-image"></div>
+            <!-- <button id="clickable">Click me to select files</button> -->
+          </td>
+          <td>
+            <img src="/static/equals.png" width = 128 height = 128>
+          </td>
+
+          <!-- QueryResultsView -->
+          <template v-for="(row, _) in search_results">
+            <tr>
+              <template v-for="(item, _) in row">
+              <td>
+                <!-- <h2>{{item.filename}}</h2> -->
+                <img :src="item.filename" width=256 height=256>
+                <h3>{{item.class}}</h3>
+              </td>
+              </template>
+            </tr>
+          </template>
+
+          <!-- <template v-for="(item, index) in search_results">
+            <td>
+              <img :src="item.filename" width=256 height=256>
+              <h3>{{item.class}}</h3>
+            </td>
+          </template> -->
+        </tr>
+      </tbody>
+    </div>
+  </div>
+</template>
+
+<script>
+import vueDropzone from "vue2-dropzone";
+
+export default {
+  data () {
+    return {
+      num_images: 0,
+      database_name: "offline",
+      search_results: [],
+
+      dropConfig: {
+        url: "http://hiro_wifi:1980/v1/search",
+//        previewsContainer: "#search-image",
+//        clickable: "#search-image",
+//        maxFiles: 1,
+        maxFilesize: 2,
+        acceptedFiles: "image/*,.png,.jpg,.gif,.bmp,.jpeg",
+        addRemoveLinks: true,
+        resizeWidth: 256,
+        resizeHeight: 256,
+//        thumbnailWidth: "256",
+//        thumbnailHeight: "256",
+        dictRemoveFile: "Search again",
+        //autoProcessQueue: false,
+        //autoQueue: false,
+        //dictDefaultMessage: "Click or drop photo here to search"
+        // accept: function(file, done) {
+        //   if (file.name == "justinbieber.jpg") {
+        //     alert("Naha, you don't.");
+        //   } else { 
+        //     alert("Cool beans."); 
+        //   }
+        //}
+      }
+    }
+  },
+
+  components: {
+    vueDropzone
+  },
+
+  methods: {
+    get_database_info() 
+    {
+      const http = new XMLHttpRequest();
+      const url = "http://hiro_wifi:1980/v1/images"
+      http.open("GET", url);
+      http.send();
+      http.onreadystatechange = (e) => 
+      {
+        if (http.readyState == 4 && http.status == 200)
+        {
+          //console.log(http.responseText);
+          var response = JSON.parse(http.responseText);
+          this.num_images = response.num_images
+          this.database_name = response.database_name
+        }
+      }
+    },
+
+    // Dropzone.js converts file to base64 and prefixes it with the MIME type.
+    // This might be the right thing to do, but it's not how curl works and it
+    // breaks sever-side PIL.Image.open().
+    // So, let's strip the metadata and convert back to raw bytes to keep the server happy.
+    // https://stackoverflow.com/questions/4998908/convert-data-uri-to-file-then-append-to-formdata
+    data_url_to_blob(dataURL) 
+    {
+        // convert base64/URLEncoded data component to raw binary data held in a string
+        var byteString;
+        if (dataURL.split(',')[0].indexOf('base64') >= 0)
+            byteString = atob(dataURL.split(',')[1]);
+        else
+            byteString = unescape(dataURL.split(',')[1]);
+
+        // separate out the mime component
+        var mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+
+        // write the bytes of the string to a typed array
+        var ia = new Uint8Array(byteString.length);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+
+        return new Blob([ia], {type:mimeString});
+    },
+
+    // if autoProcess = false, manually submit the file
+    submit_query(file) 
+    {
+      console.log("submit_query: " + file)
+
+      const http = new XMLHttpRequest();
+      const url = "http://hiro_wifi:1980/v1/search"
+      http.open("POST", url);
+      http.setRequestHeader("Content-Type", "application/octet-stream")
+
+      // TODO: load an image file
+      var image_bytes = this.data_url_to_blob( file.dataURL) 
+      console.log("File name = " + file.name)
+      console.log("File size = " + file.size)
+      console.log("File data = " + image_bytes )
+
+      http.send( image_bytes );
+
+      http.onreadystatechange = (e) => 
+      {
+        console.log("submit_query: " + http.responseText);
+        if (http.readyState == 4 && http.status == 200)
+        {
+          this.dropzone.processQueue()
+          //this.$refs.dropzone.processQueue()
+        }
+      }
+    },
+
+    // Nuke these if we set autoProcessQueue = true (manual control of upload / response)
+    on_query_complete(file)
+    {
+      if (file && file.xhr)
+      {  
+        console.log("query complete: " + file + " : " + file.xhr.response)
+        //////this.search_results.length = 0
+        //this.$refs.dropzone.removeAllFiles(true)
+        //this.$refs.dropzone.clickable = true
+
+        //file.previewElement.innerHTML = "";
+
+        var new_results = []
+
+        var dict = JSON.parse(file.xhr.response)
+        for (var key in dict)
+        {
+          if (dict.hasOwnProperty(key))
+          {
+            var search_result = dict[key]
+
+            // NOTE: in Vue.js we don't modify the DOM directly
+            // Everything is data-driven, so we update component.variable and the component will auto-refresh
+//            this.search_results.push( { class: search_result.class, filename: search_result.filename } )
+            new_results.push( { class: search_result.class, filename: search_result.filename } )
+          }
+        }
+
+        this.search_results.push(new_results)
+      }
+    },
+  },
+
+  created()
+  {
+    this.get_database_info()
+    //console.log("dropzone = " + this.dropzone)
+    //console.log("refs = " + this.$refs.dropzone)
+    //this.default_click_handler = this.dropzone.clicked
+    //console.log("click handler = " + this.default_click_handler)
+  },
+}
+</script>
+
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+<style scoped>
+
+.dropzone {
+  width: 256px;
+  height: 150px;
+  min-height: 0px !important;
+}   
+
+.dz-image img {
+  width: 100%;
+  height: 100%;
+}
+
+.dropzone-search-image {
+    height: 256px;
+    width: 256px;
+    border: dashed 1px red;
+    background-color: rgb(255, 255, 255);
+}
+
+h1, h2, h3 {
+  font-weight: normal;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  display: inline-block;
+  margin: 0 10px;
+}
+
+a {
+  color: #1951ec;
+}
+
+.right_align {
+    position: absolute;
+    right: 0px;
+    width: 300px;
+    border: 3px solid rgb(255, 255, 255);
+    padding: 10px;
+}
+
+.left_align {
+    position: absolute;
+    left: 0px;
+    width: 300px;
+    border: 3px solid rgb(255, 255, 255);
+    padding: 10px;
+}
+
+table {
+  table-layout: fixed;
+  width: 90%;
+  border-collapse: collapse;
+    border: 3px solid rgb(255, 255, 255);
+}
+
+thead th:nth-child(1) {
+  width: 20%;
+}
+
+thead th:nth-child(2) {
+  width: 10%;
+}
+
+thead th:nth-child(3) {
+  width: 20%;
+}
+
+thead th:nth-child(4) {
+  width: 20%;
+}
+
+thead th:nth-child(5) {
+  width: 20%;
+}
+
+thead th:nth-child(6) {
+  width: 20%;
+}
+
+th, td {
+  padding: 10px;
+}
+
+</style>
