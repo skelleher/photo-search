@@ -1,6 +1,21 @@
 <template>
   <div>
     <h1>About</h1>
+
+    Photo search engine created by <a href="http://www.seankelleher.com">Sean Kelleher</a>, for kicks, in my spare time.
+    <br>
+    Powered by deep learning.
+    <br>
+    <br>
+    Follow me on Twitter <a href="https://twitter.com/agent_cooper">@agent_cooper</a>
+    <br>
+    <br>
+    The <a href="https://github.com/skelleher/photo-search-server">server source code</a> is on GitHub.
+    <br>
+    <br>
+    The <a href="https://github.com/skelleher/photo-search">front-end source code</a> is on GitHub.
+    <br>
+
   </div>
 </template>
 

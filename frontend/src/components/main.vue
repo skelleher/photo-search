@@ -173,7 +173,7 @@ export default {
       // will always be that same image.  So request 6 images and discard the first one.
 
       const http = new XMLHttpRequest()
-      const url = "http://hiro_wifi:1980/v1/images/" + id + "/similar?k=6"
+      const url = "http://skelleher.duckdns.org:1980/v1/images/" + id + "/similar?k=6"
       http.open("GET", url)
       http.send()
       http.onreadystatechange = (e) => 
