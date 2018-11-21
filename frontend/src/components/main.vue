@@ -1,7 +1,7 @@
 <template>
   <div >
     <!-- Header -->
-    <h1>Database {{ database_name }} contains {{ num_images }} images</h1>
+    <h1>Database contains {{ num_images }} images</h1>
     <div>
       <router-link to="/about">About</router-link>
     </div>
@@ -62,16 +62,17 @@ import Button from 'vue-progress-button'
 export default {
   data () {
     return {
+      server: "skelleher.duckdns.org",
+
       num_images: 0,
       database_name: "offline",
       search_images: [],
       search_results: [],
 
       dropConfig: {
-        url: "http://hiro_wifi:1980/v1/search",
+        url: "http://skelleher.duckdns.org:1980/v1/search",
         maxFiles: 5,
-        maxFilesize: 2,
-        acceptedFiles: "image/*,.png,.jpg,.gif,.bmp,.jpeg",
+        acceptedFiles: "image/*,.png,.jpg,.bmp,.jpeg",
         addRemoveLinks: true,
         resizeWidth: 256,
         //resizeHeight: 256,
@@ -93,7 +94,7 @@ export default {
     get_database_info() 
     {
       const http = new XMLHttpRequest()
-      const url = "http://hiro_wifi:1980/v1/images"
+      const url = "http://skelleher.duckdns.org:1980/v1/images"
       http.open("GET", url)
       http.send()
       http.onreadystatechange = (e) => 
@@ -148,7 +149,7 @@ export default {
       var random_image_id = Math.floor((Math.random() * this.num_images))
 
       const http = new XMLHttpRequest()
-      const url = "http://hiro_wifi:1980/v1/images/" + random_image_id
+      const url = "http://skelleher.duckdns.org:1980/v1/images/" + random_image_id
       http.open("GET", url)
       http.send()
       http.onreadystatechange = (e) => 
@@ -259,22 +260,6 @@ export default {
       var results = JSON.parse(file.xhr.response)
       this.add_file_and_results_to_page(file, results)
     },
-
-    test_click()
-    {
-      console.log("**** TEST CLICK")
-      var twoToneButton = document.querySelector('.twoToneButton')
-      console.log("*** fancy button = ", twoToneButton)
-
-      twoToneButton.innerHTML = "Signing In";
-      twoToneButton.classList.add('spinning');
-      
-      setTimeout( 
-          function  (){  
-              twoToneButton.classList.remove('spinning');
-              twoToneButton.innerHTML = "Sign In";
-          }, 6000);
-    },
   },
 
   created()
@@ -313,19 +298,19 @@ export default {
 }
 
 .search-image {
-  width: 10%;
+  /*width: 10%;*/
   height: auto;
   /* border: dashed 3px red; */
   background-color: rgb(255, 255, 255);
 }
 
 .equals-image {
-  width: 10%;
+  /* width: 10%; */
   height: auto;
 }
 
 .result-image {
-  width: 10%;
+  /* width: 10%; */
   height: auto;
 }
 
@@ -348,9 +333,11 @@ a {
 }
 
 table {
-  margin: 0 auto;
+  /*margin: 0 auto;*/
+  margin-left:auto; 
+  margin-right:auto;
   table-layout: fixed;
-  width: 50%;
+  /* width: 50%; */
   border-collapse: collapse;
   /* border: 5px solid rgb(0, 255, 0); */
 }
@@ -362,6 +349,64 @@ tr {
 
 td {
   /* border: 1px solid rgb(25, 0, 255); */
+}
+
+
+/*  SECTIONS  */
+.section {
+	clear: both;
+	padding: 0px;
+	margin: 0px;
+}
+
+/*  COLUMN SETUP  */
+.col {
+	display: block;
+	float:left;
+	margin: 1% 0 1% 1.6%;
+}
+.col:first-child { margin-left: 0; }
+
+/*  GROUPING  */
+.group:before,
+.group:after { content:""; display:table; }
+.group:after { clear:both;}
+.group { zoom:1; /* For IE 6/7 */ }
+
+
+/*  GRID OF SEVEN  */
+.span_7_of_7 {
+	width: 100%;
+}
+
+.span_6_of_7 {
+  	width: 85.48%;
+}
+
+.span_5_of_7 {
+  	width: 70.97%;
+}
+
+.span_4_of_7 {
+  	width: 56.45%;
+}
+
+.span_3_of_7 {
+  	width: 41.94%;
+}
+
+.span_2_of_7 {
+  	width: 27.42%;
+}
+
+.span_1_of_7 {
+  	width: 12.91%;
+}
+
+/*  GO FULL WIDTH BELOW 480 PIXELS */
+@media only screen and (max-width: 480px) {
+	.col {  margin: 1% 0 1% 0%; }
+	.span_1_of_7, .span_2_of_7, .span_3_of_7, .span_4_of_7, .span_5_of_7, .span_6_of_7, .span_7_of_7 { width: 100%; }
 }
 
 </style>
