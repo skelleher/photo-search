@@ -5,6 +5,9 @@ It uses a deep neural net to compute photo similarity.
 
 You can play with it online here: http://skelleher-apps.s3-website-us-west-2.amazonaws.com/
 
+![Search results](screenshots/ridley_photo_search_engine5.jpeg?raw=true)
+
+
 Install
 -------
 
